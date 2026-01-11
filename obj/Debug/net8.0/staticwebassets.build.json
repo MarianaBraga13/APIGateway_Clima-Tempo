@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "C/5KXNyZF50dvwtD81wo9PJ+nPb2aCQTczipCH1BfJU=",
+  "Source": "WeatherGateway",
+  "BasePath": "_content/WeatherGateway",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
