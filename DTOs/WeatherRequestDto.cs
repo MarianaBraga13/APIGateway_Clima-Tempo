@@ -1,7 +1,6 @@
-namespace WeatherGateway.DTOs
+namespace WeatherGateway.Api.DTOs;
+
+public class WeatherRequestDto
 {
-    public class WeatherRequestDto
-    {
-        public required string City { get; set; }
-    }
+    public string City { get; set; } = string.Empty;
 }

@@ -1,62 +1,51 @@
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using WeatherGateway.DTOs;
+using System.Text.Json;
+using WeatherGateway.Api.DTOs;
 
-namespace WeatherGateway.Services
+namespace WeatherGateway.Api.Services;
+
+public class WeatherService : IWeatherService
 {
-    public class WeatherService
-    {
-        private readonly HttpClient _httpClient;
-        private const string API_KEY = "SUA_CHAVE_WEATHERAPI";
-        private const string BASE_URL = "http://api.weatherapi.com/v1/current.json";
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
 
-        public WeatherService(HttpClient httpClient)
+    public WeatherService(HttpClient httpClient, IConfiguration configuration)
+    {
+        _httpClient = httpClient;
+        _configuration = configuration;
+    }
+
+    public async Task<WeatherResponseDto> GetWeatherAsync(string city)
+    {
+        var apiKeyEnvName =
+            _configuration["ExternalApis:WeatherApi:ApiKeyEnv"];
+
+        var apiKey = Environment.GetEnvironmentVariable(apiKeyEnvName!);
+
+        if (string.IsNullOrEmpty(apiKey))
+            throw new Exception("Weather API Key não configurada");
+
+        var baseUrl =
+            _configuration["ExternalApis:WeatherApi:BaseUrl"];
+
+        var url = $"{baseUrl}current.json?key={apiKey}&q={city}&lang=pt";
+
+        var response = await _httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+
+        var root = doc.RootElement;
+
+        return new WeatherResponseDto
         {
-            _httpClient = httpClient;
-        }
-
-        public async Task<WeatherResponseDto?> GetWeatherAsync(string city)
-        {
-            // Monta a URL da API externa
-            var url = $"{BASE_URL}?key={API_KEY}&q={city}&aqi=no";
-
-            try
-            {
-                var response = await _httpClient.GetFromJsonAsync<WeatherApiResponse>(url);
-
-                if (response == null) return null;
-
-                // Mapeia para o seu DTO de saída
-                return new WeatherResponseDto
-                {
-                    City = response.Location.Name,
-                    Condition = response.Current.Condition.Text,
-                    TemperatureC = response.Current.TempC,
-                    Humidity = response.Current.Humidity
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
+            City = root.GetProperty("location").GetProperty("name").GetString()!,
+            Country = root.GetProperty("location").GetProperty("country").GetString()!,
+            TemperatureC = root.GetProperty("current").GetProperty("temp_c").GetDecimal(),
+            Condition = root.GetProperty("current")
+                .GetProperty("condition")
+                .GetProperty("text")
+                .GetString()!
+        };
     }
-
-    // Classes para mapear JSON da WeatherAPI (simplificado)
-    public class WeatherApiResponse
-    {
-        public Location Location { get; set; } = new Location();
-        public Current Current { get; set; } = new Current();
-    }
-
-    public class Location { public string Name { get; set; } = string.Empty; }
-    public class Current
-    {
-        public float TempC { get; set; }
-        public int Humidity { get; set; }
-        public Condition Condition { get; set; } = new Condition();
-    }
-
-    public class Condition { public string Text { get; set; } = string.Empty; }
 }

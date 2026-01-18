@@ -1,36 +1,34 @@
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
+namespace WeatherGateway.Api.Middleware;
 
-namespace WeatherGateway.Middleware
+public class ApiKeyMiddleware
 {
-    public class ApiKeyMiddleware
+    private readonly RequestDelegate _next;
+    private readonly string _headerName;
+    private readonly string _validKey;
+
+    public ApiKeyMiddleware(RequestDelegate next, IConfiguration configuration)
     {
-        private readonly RequestDelegate _next;
-        private const string API_KEY_HEADER = "X-API-Key";
-        private const string API_KEY_VALUE = "SUA_CHAVE_AQUI"; // troque por uma chave real
+        _next = next;
+        _headerName = configuration["Authentication:ClientApiKeyHeader"]!;
+        _validKey = Environment.GetEnvironmentVariable("CLIENT_API_KEY")!;
+    }
 
-        public ApiKeyMiddleware(RequestDelegate next)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (!context.Request.Headers.TryGetValue(_headerName, out var clientKey))
         {
-            _next = next;
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsync("API Key não informada");
+            return;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        if (clientKey != _validKey)
         {
-            if (!context.Request.Headers.TryGetValue(API_KEY_HEADER, out var extractedApiKey))
-            {
-                context.Response.StatusCode = 401; // Unauthorized
-                await context.Response.WriteAsync("API Key ausente");
-                return;
-            }
-
-            if (!extractedApiKey.Equals(API_KEY_VALUE))
-            {
-                context.Response.StatusCode = 403; // Forbidden
-                await context.Response.WriteAsync("API Key inválida");
-                return;
-            }
-
-            await _next(context);
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsync("API Key inválida");
+            return;
         }
+
+        await _next(context);
     }
 }
