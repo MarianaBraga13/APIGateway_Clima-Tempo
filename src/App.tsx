@@ -12,7 +12,12 @@ export default function App() {
 
     setLoading(true);
     try {
+
+      //Teste da resposta da API
       const data = await getWeather(city);
+
+      //console.log("Resposta da API:", data);
+
       setWeather(data);
     } catch {
       alert("Erro ao consultar clima.");
@@ -95,6 +100,7 @@ export default function App() {
         {/* RESULTADO */}
         {weather && (
           <WeatherCard
+            country={weather.country}
             city={weather.city}
             temperature={weather.temperature}
             condition={weather.condition}

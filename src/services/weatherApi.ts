@@ -10,9 +10,13 @@ const api = axios.create({
 });
 
 export const getWeather = async (city: string) => {
-  const response = await api.get("/weather", {
-    params: { city },
-  });
+  const response = await api.get(`/weather?city=${city}`);
 
-  return response.data;
+  return {
+    country: response.data.country,
+    city: response.data.city,
+    temperature: response.data.temperatureC,
+    condition: response.data.condition,
+    updatedAt: new Date().toLocaleString("pt-BR"),
+  };
 };

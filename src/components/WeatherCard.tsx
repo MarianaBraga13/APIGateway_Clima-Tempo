@@ -1,11 +1,16 @@
+import { WeatherAnimation } from "./WeatherAnimation";
+
 type WeatherProps = {
+  country?: string;
   city: string;
   temperature: number;
   condition: string;
   updatedAt: string;
+  
 };
 
 export function WeatherCard({
+  country,
   city,
   temperature,
   condition,
@@ -30,8 +35,12 @@ export function WeatherCard({
       "
     >
       <h2 className="text-2xl font-semibold text-gray-800">
-        {city}
+        {country} - {city}
       </h2>
+      
+      <div className="flex justify-center my-2">
+        <WeatherAnimation condition={condition} />
+      </div>
 
       <p className="text-5xl font-bold text-blue-600 my-4">
         {temperature}°C
